@@ -1,39 +1,50 @@
 name: Create a new release
 
 on:
-    push:
-        tags:
-           - 'v[0-9]+.[0-9]+.[0-9]+'
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
-    release:
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write
-            pages: write
-        steps:
-            - name: Checkout 🛎️
-              uses: actions/checkout@v4
+    build:
+      runs-on: ubuntu-latest
+      permissions:
+        contents: write
+        pages: write
+        id-token: write
+      steps:
+        - name: Checkout 🛎️
+          uses: actions/checkout@v4
 
-            - name: Create GitHub Release 🚀
-              uses: softprops/action-gh-release@v2
-              with:
-                generate_release_notes: true
-              env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        - name: Create GitHub Release 🚀
+          uses: softprops/action-gh-release@v2
+          with:
+            generate_release_notes: true
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Create site from Readme
-              run: |
-                # Here we set up the HydePHP source files to use the README.md as the index page
-                mkdir _pages
-                mv README.md _pages/index.md
-                rm -rf !'_pages'
+        - name: Setup Pages
+          uses: actions/configure-pages@v5
+        - name: Build with Jekyll
+          uses: actions/jekyll-build-pages@v1
+          with:
+            source: ./
+            destination: ./_site
+        - name: Upload artifact
+          uses: actions/upload-pages-artifact@v3
 
-            - name: Create Hyde config
-              run: |
-                # Configure the site name
-                echo 'name: Wumpus World API' >> hyde.yml
-
-            - uses: hydephp/action@master
-              with:
-                deploy-to: "pages"
+    # Deployment job
+    deploy:
+      environment:
+        name: github-pages
+        url: ${{ steps.deployment.outputs.page_url }}
+      runs-on: ubuntu-latest
+      needs: build
+      steps:
+        - name: Deploy to GitHub Pages
+          id: deployment
+          uses: actions/deploy-pages@v4

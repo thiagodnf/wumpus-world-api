@@ -20,6 +20,7 @@
     "use strict";
 
     function create(lines, columns) {
+        console.log(lines, columns);
         console.log("Example of UMD module system");
     }
 

@@ -21,6 +21,18 @@ jobs:
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+            - name: Create site from Readme
+              run: |
+                # Here we set up the HydePHP source files to use the README.md as the index page
+                mkdir _pages
+                mv README.md _pages/index.md
+                rm -rf !'_pages'
+
+            - name: Create Hyde config
+              run: |
+                # Configure the site name
+                echo 'name: Wumpus World API' >> hyde.yml
+
             - uses: hydephp/action@master
               with:
                 deploy-to: "pages"
